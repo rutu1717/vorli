@@ -22,8 +22,8 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({language,onSelect}) 
           <Menu.Content>
             {
                 lang_array.map(([languages,version])=>(
-                    <MenuItem value={languages} color="grey" key={languages} onClick={()=>{onSelect(languages as Language)}}>{languages}
-                    <Text color="grey">{version}</Text>
+                    <MenuItem  value={languages} color={languages===language ? "blue.500":""} backgroundColor={languages===language ? "grey.700":""} key={languages} onClick={()=>{onSelect(languages as Language)}}>{languages}
+                    <Text color="grey">({version})</Text>
                     </MenuItem>
                 ))
             }

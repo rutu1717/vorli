@@ -1,6 +1,6 @@
 import { Box, HStack } from "@chakra-ui/react";
 import { Editor } from "@monaco-editor/react";
-import {  useState } from "react";
+import {  useState,useRef} from "react";
 import LanguageSelector from "./languageselector";
 import { CODE_SNIPPETS } from "@/constants";
 import Output from "./output";
@@ -9,11 +9,11 @@ export type Language = keyof typeof CODE_SNIPPETS;
 function MyCodeEditor () {
     const [value,setValue] = useState<string>(`\nfunction greet(name) {\n\tconsole.log("Hello, " + name + "!");\n}\n\ngreet("Alex");\n`);
     const [language,setLanguage] = useState<Language>("javascript");
-//    const editorRef = useRef<any>(null);
-    // const onMount = (editor:any) =>{
-    //     editorRef.current = editor;
-    //     editor.focus();
-    // }
+   const editorRef = useRef<any>(null);
+    const onMount = (editor:any) =>{
+        editorRef.current = editor;
+        editor.focus();
+    }
     const onSelect = (language:Language) =>{
         setLanguage(language);
         setValue(CODE_SNIPPETS[language])
@@ -30,13 +30,12 @@ function MyCodeEditor () {
         defaultLanguage="javascript"
         defaultValue={CODE_SNIPPETS[language]}
         value={value}
-        // onMount={onMount}
+        onMount={onMount}
         onChange={()=>{setValue(value)}}
         />
             </Box>
-        <Output/>
+        <Output editorRef={editorRef} language={language}/>
         </HStack>
-       
         </Box>
     )
 }

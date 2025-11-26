@@ -20,7 +20,11 @@ const Output = ({ editorRef, language }: Outputprops) => {
         "No output";
 
       setOutput(text);
-    } catch (error) {
+    } catch (error:any) {
+        console.error(error)
+        // let message = "Something went wrong with the above code.";
+        let message = error.message;
+        setOutput(message)
     } finally {
       setisLoading(false);
     }

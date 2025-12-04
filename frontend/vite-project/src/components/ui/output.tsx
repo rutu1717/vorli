@@ -134,7 +134,13 @@ const Output = ({ editorRef, language }: Outputprops) => {
             </Tabs.Trigger>
             <Tabs.Indicator rounded="l2" />
           </Tabs.List>
-          <Tabs.Content value="output">{output}</Tabs.Content>
+          <Tabs.Content value="output">{
+            output ? (
+              <Text>{output}</Text>
+            ) : (
+              'Click "Run Code" to execute or "Analyze with AI" to understand your code'
+            )
+            }</Tabs.Content>
           <Tabs.Content value="ai">
             <Dashboard aiAnalysis={aiAnalysis} />
           </Tabs.Content>

@@ -96,9 +96,9 @@ const Dashboard = ({ aiAnalysis }: DashboardProps) => {
                                             </Text>
                                         </VStack>
                                     </HStack>
-                                    <Badge colorScheme={statusColor} fontSize="md" px={3} py={1}>
+                                    {/* <Badge colorScheme={statusColor} fontSize="md" px={3} py={1}>
                                         {statusColor === "green" ? "✓" : "⚠"}
-                                    </Badge>
+                                    </Badge> */}
                                 </HStack>
                             </Card.Body>
                         </Card.Root>

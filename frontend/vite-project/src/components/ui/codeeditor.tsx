@@ -7,8 +7,8 @@ import Output from "./output";
 export type Language = keyof typeof CODE_SNIPPETS;
 
 function MyCodeEditor() {
-    const [value, setValue] = useState<string>(`\nfunction greet(name) {\n\tconsole.log("Hello, " + name + "!");\n}\n\ngreet("Alex");\n`);
-    const [language, setLanguage] = useState<Language>("javascript");
+    const [value, setValue] = useState<string>(`#include <iostream>\n\nint main() {\n\tstd::cout << "Hello World" << std::endl;\n\treturn 0;\n}\n`);
+    const [language, setLanguage] = useState<Language>("cpp");
     const editorRef = useRef<any>(null);
     const onMount = (editor: any) => {
         editorRef.current = editor;
@@ -36,7 +36,7 @@ function MyCodeEditor() {
                         height="75vh"
                         theme="vs-dark"
                         language={language}
-                        defaultLanguage="javascript"
+                        defaultLanguage="cpp"
                         defaultValue={CODE_SNIPPETS[language]}
                         value={value}
                         onMount={onMount}

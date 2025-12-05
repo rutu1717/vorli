@@ -13,7 +13,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({language,onSelect}) 
             <Text color="grey" mb={2} fontSize="lg">Language :</Text>
              <Menu.Root>
       <Menu.Trigger asChild>
-        <Button color="grey" variant="outline" mb={4} size="lg">
+        <Button fontWeight="bold" variant="outline" mb={4} size="lg">
           {language}
         </Button>
       </Menu.Trigger>

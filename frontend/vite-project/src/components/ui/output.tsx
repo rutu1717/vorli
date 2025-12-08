@@ -8,10 +8,14 @@ import Dashboard from "./dashboard";
 type aiAnalysis = {
   status: string,
   time_complexity: string,
+  time_complexity_explanation: string,
   space_complexity: string,
+  space_complexity_explanation: string,
   summary: string,
   detailed_review: string,
-  key_tips: string[]
+  key_tips: string[],
+  hints: string[],
+  potential_bugs: string[]
 }
 type Outputprops = {
   editorRef: RefObject<any>;
@@ -22,7 +26,18 @@ const Output = ({ editorRef, language }: Outputprops) => {
   const [output, setOutput] = useState<any>(null);
   const [isLoading, setisLoading] = useState<boolean>(false);
   const [aiError, setaiError] = useState<string>("")
-  const [aiAnalysis, setAiAnalysis] = useState<aiAnalysis>({ status: "", time_complexity: "", space_complexity: "", summary: "", detailed_review: "", key_tips: [] });
+  const [aiAnalysis, setAiAnalysis] = useState<aiAnalysis>({
+    status: "",
+    time_complexity: "",
+    time_complexity_explanation: "",
+    space_complexity: "",
+    space_complexity_explanation: "",
+    summary: "",
+    detailed_review: "",
+    key_tips: [],
+    hints: [],
+    potential_bugs: []
+  });
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
   const runCode = async () => {
@@ -140,7 +155,7 @@ const Output = ({ editorRef, language }: Outputprops) => {
             ) : (
               'Click "Run Code" to execute or "Analyze with AI" to understand your code'
             )
-            }</Tabs.Content>
+          }</Tabs.Content>
           <Tabs.Content value="ai">
             <Dashboard aiAnalysis={aiAnalysis} />
           </Tabs.Content>

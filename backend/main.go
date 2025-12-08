@@ -13,12 +13,16 @@ import (
 
 )
 type AIAnalysis struct {
-	Status          string   `json:"status"`           // "Correct", "Inefficient", "Buggy"
-	TimeComplexity  string   `json:"time_complexity"`  // e.g., "O(N^2)"
-	SpaceComplexity string   `json:"space_complexity"` // e.g., "O(1)"
-	Summary         string   `json:"summary"`          // A 1-sentence headline
-	DetailedReview  string   `json:"detailed_review"`  // The main explanation (Markdown supported)
-	KeyTips         []string `json:"key_tips"`         // List of bullet points for improvements
+	Status                    string   `json:"status"`                      // "Correct", "Inefficient", "Buggy", "Incomplete"
+	TimeComplexity            string   `json:"time_complexity"`             // e.g., "O(N^2)"
+	TimeComplexityExplanation string   `json:"time_complexity_explanation"` // Plain English explanation
+	SpaceComplexity           string   `json:"space_complexity"`            // e.g., "O(1)"
+	SpaceComplexityExplanation string  `json:"space_complexity_explanation"` // Plain English explanation
+	Summary                   string   `json:"summary"`                     // A 1-sentence headline
+	DetailedReview            string   `json:"detailed_review"`             // The main explanation (Markdown supported)
+	KeyTips                   []string `json:"key_tips"`                    // List of bullet points for improvements
+	Hints                     []string `json:"hints"`                       // Hints for incomplete/missing code
+	PotentialBugs             []string `json:"potential_bugs"`              // Potential bugs or edge cases
 }
 type CodeRequest struct {
     Code     string `json:"code"`
@@ -83,21 +87,32 @@ func analyzeCodeHandler(w http.ResponseWriter, r *http.Request) {
     // Create prompt with user's code
    // Define the system instructions separately to keep code clean
     const systemPrompt = `
-You are a Senior Technical Interviewer. 
-Analyze the student's code. 
+You are a Senior Technical Interviewer and Code Mentor. 
+Analyze the student's code with educational depth and clarity.
 Your response must be a strictly valid JSON object. 
 Do not include markdown formatting (like '''json). 
 Do not include any text outside the JSON object.
 
 Follow this schema:
 {
-  "status": "One of: Correct, Inefficient, Incorrect",
-  "time_complexity": "Big O notation",
-  "space_complexity": "Big O notation",
+  "status": "One of: Correct, Inefficient, Incorrect, Incomplete",
+  "time_complexity": "Big O notation (e.g., O(n), O(n^2), O(log n))",
+  "time_complexity_explanation": "A clear, beginner-friendly explanation of why this time complexity occurs. Example: 'The loop runs n times, and for each iteration, we perform constant-time operations, resulting in O(n).'",
+  "space_complexity": "Big O notation (e.g., O(1), O(n))",
+  "space_complexity_explanation": "A clear explanation of the space usage. Example: 'We use a single variable to track the sum, which takes constant space O(1).'",
   "summary": "A punchy, 10-word summary of the result",
-  "detailed_review": "Your detailed mentorship feedback here. Use Markdown for bolding/code.",
-  "key_tips": ["Tip 1", "Tip 2", "Tip 3"]
+  "detailed_review": "Your detailed mentorship feedback here. Use Markdown for bolding/code. Be encouraging but honest.",
+  "key_tips": ["Tip 1 - actionable improvement", "Tip 2 - best practice", "Tip 3 - optimization suggestion"],
+  "hints": ["Only if code is incomplete or missing key elements. Provide hints like 'Consider adding input validation' or 'Missing return statement'. Leave empty array if code is complete."],
+  "potential_bugs": ["List any edge cases, potential runtime errors, or logical bugs. Examples: 'Division by zero not handled', 'Array index out of bounds possible'. Leave empty if no bugs found."]
 }
+
+IMPORTANT GUIDELINES:
+- If code is incomplete (missing functions, syntax errors, partial implementation), set status to "Incomplete" and provide helpful hints
+- Explain complexities in simple terms that a beginner can understand
+- Be specific about what makes the code good or what needs improvement
+- Provide actionable tips, not just generic advice
+- If code has bugs, explain them clearly in potential_bugs array
 `
 // Then append the user's code to this as before
 

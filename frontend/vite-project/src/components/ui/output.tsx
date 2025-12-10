@@ -1,4 +1,4 @@
-import { Box, Button, Tabs, Text, VStack } from "@chakra-ui/react";
+import { Box, Button, Tabs, Text, VStack, Textarea } from "@chakra-ui/react";
 import type { Language } from "./codeeditor";
 import { RefObject, useState } from "react";
 import { executeCode } from "@/api";
@@ -26,6 +26,7 @@ const Output = ({ editorRef, language }: Outputprops) => {
   const [output, setOutput] = useState<any>(null);
   const [isLoading, setisLoading] = useState<boolean>(false);
   const [aiError, setaiError] = useState<string>("")
+  const [customInput, setCustomInput] = useState<string>("")
   const [aiAnalysis, setAiAnalysis] = useState<aiAnalysis>({
     status: "",
     time_complexity: "",
@@ -45,7 +46,7 @@ const Output = ({ editorRef, language }: Outputprops) => {
     if (!sourceCode) return;
     try {
       setisLoading(true);
-      const { run: result } = await executeCode(sourceCode, language);
+      const { run: result } = await executeCode(sourceCode, language,customInput);
       const text =
         [result.stdout, result.stderr].filter(Boolean).join("\n") ||
         "No output";
@@ -91,6 +92,17 @@ const Output = ({ editorRef, language }: Outputprops) => {
   return (
     <Box w="50%">
       <Text mb={2}>Output</Text>
+      <Box mb={2}>
+      <Text fontSize="sm" mb={1} color="gray.400">Custom Input (stdin):</Text>
+      <Textarea
+        value={customInput}
+        onChange={(e) => setCustomInput(e.target.value)}
+        placeholder="Enter input here (e.g., 5)"
+        rows={4}
+        fontFamily="monospace"
+        fontSize="sm"
+      />
+    </Box>
       <VStack gap={2} mb={4} display={"flex"} flexDirection={"row"}>
         <Button
           variant="outline"

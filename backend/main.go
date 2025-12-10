@@ -10,8 +10,10 @@ import (
     "os"
     "google.golang.org/genai"
     "strings" // FIXED: Was missing
+    piston "github.com/milindmadhukar/go-piston"
 
 )
+
 type AIAnalysis struct {
 	Status                    string   `json:"status"`                      // "Correct", "Inefficient", "Buggy", "Incomplete"
 	TimeComplexity            string   `json:"time_complexity"`             // e.g., "O(N^2)"
@@ -28,7 +30,12 @@ type CodeRequest struct {
     Code     string `json:"code"`
     Language string `json:"language"`
 }
-
+type pistonRequest struct {
+    Code string `json:"code"`
+    Version string `json:"version"`
+    Language string `json:"language"`
+    Stdin string `json:"stdin"`
+}
 type CodeResponse struct {
     Analysis string `json:"analysis"`
     Error    string `json:"error,omitempty"`
@@ -158,10 +165,49 @@ fullPrompt := fmt.Sprintf("%s\n\n---\n\n%s", systemPrompt, userPrompt)
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(analysis)
 }
-
+func executeCodeHandler(w http.ResponseWriter, r *http.Request) {
+    if r.Method != http.MethodPost {
+        http.Error(w,"Method Not Allowed",http.StatusMethodNotAllowed)
+        return
+    }
+    var req pistonRequest 
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w,"Invalid request body",http.StatusBadRequest)
+        return
+    }
+    client := piston.CreateDefaultClient()
+    execution, err := client.Execute(req.Language, req.Version, // Passing language. Since no version is specified, it uses the latest supported version.
+		[]piston.Code{
+			{Content: req.Code},
+		}, // Passing Code.
+		piston.Stdin(req.Stdin), // Passing input.
+	)
+	if err != nil {
+		log.Printf("Execution error: %v", err)
+		http.Error(w, "Code execution failed", http.StatusInternalServerError)
+		return
+	}
+	
+	// Create response matching Piston API format
+	response := map[string]interface{}{
+		"run": map[string]interface{}{
+			"stdout": execution.Run.Stdout,
+			"stderr": execution.Run.Stderr,
+			"output": execution.Run.Output,
+			"code":   execution.Run.Code,
+		},
+	}
+	
+	fmt.Println("Execution output:", execution.GetOutput())
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(response)
+    return
+}
 func main() {
+ 
     http.HandleFunc("/api/analyze", enableCORS(analyzeCodeHandler))
-    
+    http.HandleFunc("/api/execute", enableCORS(executeCodeHandler))
     port := ":8080"
     fmt.Printf("Server starting on port %s...\n", port)
     if err := http.ListenAndServe(port, nil); err != nil {

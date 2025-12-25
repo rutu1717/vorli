@@ -1,10 +1,7 @@
 import axios from "axios"
 import type { Language } from "./components/ui/codeeditor"
 import { LANGUAGE_VERSIONS } from "./constants"
-import { version } from "react"
-const API = axios.create({
-    baseURL:"https://emkc.org/api/v2/piston"
-})
+
 
 export const executeCode = async (sourceCode:any,language:Language,stdin:string="") =>{
     // const response = await API.post("/execute",{
@@ -16,7 +13,11 @@ export const executeCode = async (sourceCode:any,language:Language,stdin:string=
     //     "stdin": stdin
     // });
     // return response.data;
-    const response = await axios.post("http://localhost:8080/api/execute",{
+    // Dynamic API URL - works with Nginx proxy in production
+    const apiBase = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080' 
+        : '';
+    const response = await axios.post(`${apiBase}/api/execute`,{
         "code":sourceCode,
         "version":LANGUAGE_VERSIONS[language],
         "language":language,

@@ -1,0 +1,31 @@
+# Unified runner image with GCC, JDK, and Python
+FROM ubuntu:22.04
+
+# Avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install all three language compilers/interpreters
+RUN apt-get update && apt-get install -y \
+    g++ \
+    openjdk-17-jdk \
+    python3 \
+    python3-pip \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create symlink for python command
+RUN ln -s /usr/bin/python3 /usr/bin/python
+   
+# Create a non-root user for security
+RUN useradd -m -s /bin/bash runner
+
+# Create working directory
+WORKDIR /code
+
+# Set ownership
+RUN chown runner:runner /code
+
+# Switch to non-root user
+USER runner
+
+# Default command
+CMD ["/bin/bash"]

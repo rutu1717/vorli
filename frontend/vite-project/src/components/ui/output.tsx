@@ -1,9 +1,9 @@
-import { Box, Button, Tabs, Text, VStack, Textarea } from "@chakra-ui/react";
+import { Box, Button, Tabs, Text, VStack, Input } from "@chakra-ui/react";
 import type { Language } from "./codeeditor";
-import { RefObject, useState } from "react";
-import { executeCode } from "@/api";
+import { RefObject, useState, useRef } from "react";
 import axios from "axios";
 import Dashboard from "./dashboard";
+import { InteractiveExecutor } from "@/websocket";
 
 type aiAnalysis = {
   status: string,
@@ -23,10 +23,6 @@ type Outputprops = {
 };
 
 const Output = ({ editorRef, language }: Outputprops) => {
-  const [output, setOutput] = useState<any>(null);
-  const [isLoading, setisLoading] = useState<boolean>(false);
-  const [aiError, setaiError] = useState<string>("")
-  const [customInput, setCustomInput] = useState<string>("")
   const [aiAnalysis, setAiAnalysis] = useState<aiAnalysis>({
     status: "",
     time_complexity: "",
@@ -41,26 +37,14 @@ const Output = ({ editorRef, language }: Outputprops) => {
   });
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
 
-  const runCode = async () => {
-    const sourceCode = editorRef.current?.getValue();
-    if (!sourceCode) return;
-    try {
-      setisLoading(true);
-      const { run: result } = await executeCode(sourceCode, language,customInput);
-      const text =
-        [result.stdout, result.stderr].filter(Boolean).join("\n") ||
-        "No output";
+  // Interactive execution state
+  const [isInteractive, setIsInteractive] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<string>("output");
+  const [interactiveOutput, setInteractiveOutput] = useState<string>("");
+  const [inputValue, setInputValue] = useState<string>("");
+  const executorRef = useRef<InteractiveExecutor | null>(null);
+  const outputRef = useRef<HTMLDivElement>(null);
 
-      setOutput(text);
-    } catch (error: any) {
-      console.error(error)
-      // let message = "Something went wrong with the above code.";
-      let message = error.message;
-      setOutput(message)
-    } finally {
-      setisLoading(false);
-    }
-  };
 
   const analyzeCode = async () => {
     const sourceCode = editorRef.current?.getValue();
@@ -69,49 +53,107 @@ const Output = ({ editorRef, language }: Outputprops) => {
     try {
       setIsAnalyzing(true);
 
-      const response = await axios.post("http://localhost:8080/api/analyze", {
+      // Dynamic API URL - works with Nginx proxy in production
+      const apiBase = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080' 
+        : '';
+      const response = await axios.post(`${apiBase}/api/analyze`, {
         code: sourceCode,
         language: language
       });
       // console.log(response)
       // console.log(response.data)
       if (response.data.error) {
-        setaiError(response.data.error)
+        console.error("AI Analysis error:", response.data.error);
       } else {
         console.log(response.data);
         setAiAnalysis(response.data);
       }
     } catch (error: any) {
       console.error(error);
-      setaiError(error.message)
+      console.error(error);
     } finally {
       setIsAnalyzing(false);
     }
   };
 
+  // Auto-scroll output to bottom when new content arrives
+  const scrollToBottom = () => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  };
+
+  // Start interactive code execution via WebSocket
+  const runInteractive = () => {
+    const sourceCode = editorRef.current?.getValue();
+    if (!sourceCode) return;
+
+    // C++ now uses Docker PTY-based handler, so interactive mode works!
+    setIsInteractive(true);
+    setInteractiveOutput("");  // Clear previous output
+    setActiveTab("output");  // Switch to output tab
+
+    // Create executor with callbacks
+    executorRef.current = new InteractiveExecutor({
+      onOutput: (text) => {
+        setInteractiveOutput(prev => prev + text);
+        setTimeout(scrollToBottom, 10);  // Scroll after state update
+      },
+      onExit: (code) => {
+        setInteractiveOutput(prev => prev + `\n\n[Program exited with code ${code}]`);
+        setIsInteractive(false);
+        setTimeout(scrollToBottom, 10);
+      },
+      onError: (message) => {
+        setInteractiveOutput(prev => prev + `\n[Error: ${message}]`);
+        setIsInteractive(false);
+      },
+      onReady: () => {
+        console.log("Program started running");
+      }
+    });
+
+    // Start execution
+    executorRef.current.start(sourceCode, language);
+  };
+
+  // Send input to the running program
+  const handleSendInput = () => {
+    if (executorRef.current && inputValue.trim()) {
+      executorRef.current.sendInput(inputValue);
+      setInteractiveOutput(prev => prev + inputValue + "\n");  // Echo input in output
+      setInputValue("");
+      setTimeout(scrollToBottom, 10);
+    }
+  };
+
+  // Handle Enter key in input field
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleSendInput();
+    }
+  };
+
+  // Stop the running program
+  const stopExecution = () => {
+    executorRef.current?.stop();
+    setIsInteractive(false);
+    setInteractiveOutput(prev => prev + "\n[Program terminated]");
+  };
+
   return (
     <Box w="50%">
       <Text mb={2}>Output</Text>
-      <Box mb={2}>
-      <Text fontSize="sm" mb={1} color="gray.400">Custom Input (stdin):</Text>
-      <Textarea
-        value={customInput}
-        onChange={(e) => setCustomInput(e.target.value)}
-        placeholder="Enter input here (e.g., 5)"
-        rows={4}
-        fontFamily="monospace"
-        fontSize="sm"
-      />
-    </Box>
       <VStack gap={2} mb={4} display={"flex"} flexDirection={"row"}>
         <Button
           variant="outline"
           colorScheme="green"
-          loading={isLoading}
-          loadingText="Running..."
-          onClick={runCode}
+          onClick={isInteractive ? stopExecution : runInteractive}
+          disabled={isAnalyzing}
         >
-          Run Code
+          {isInteractive ? "⏹ Stop" : "▶ Run"}
         </Button>
         <Button
           variant="outline"
@@ -132,42 +174,75 @@ const Output = ({ editorRef, language }: Outputprops) => {
         overflowY="auto"
         whiteSpace="pre-wrap"
       >
-        {/* {aiAnalysis ? (
-          <Box>
-            <Text fontWeight="bold" color="blue.400" mb={2}>AI Analysis:</Text>
-            <Text>{aiAnalysis}</Text>
-            {output && (
-              <>
-                <Text fontWeight="bold" color="green.400" mt={4} mb={2}>Code Output:</Text>
-                <Text>{output}</Text>
-              </>
-            )}
-          </Box>
-        ) : output ? (
-          <Box>
-            <Text fontWeight="bold" color="green.400" mb={2}>Code Output:</Text>
-            <Text>{output}</Text>
-          </Box>
-        ) : (
-          'Click "Run Code" to execute or "Analyze with AI" to understand your code'
-        )} */}
-        <Tabs.Root defaultValue="output" variant="plain">
+        <Tabs.Root value={activeTab} onValueChange={(e) => setActiveTab(e.value)} variant="plain">
           <Tabs.List bg="bg.muted" rounded="l3" p="1">
             <Tabs.Trigger value="output">
-              Output
+              Output {isInteractive && "🟢"}
             </Tabs.Trigger>
             <Tabs.Trigger value="ai">
               AI Analysis
             </Tabs.Trigger>
             <Tabs.Indicator rounded="l2" />
           </Tabs.List>
-          <Tabs.Content value="output">{
-            output ? (
-              <Text>{output}</Text>
-            ) : (
-              'Click "Run Code" to execute or "Analyze with AI" to understand your code'
-            )
-          }</Tabs.Content>
+          <Tabs.Content value="output">
+            {/* Terminal-like interface with inline input */}
+            <Box
+              ref={outputRef}
+              bg="black"
+              color="green.400"
+              p={3}
+              fontFamily="monospace"
+              fontSize="sm"
+              minH="300px"
+              maxH="450px"
+              overflowY="auto"
+              borderRadius="md"
+              cursor="text"
+              onClick={() => {
+                // Focus the hidden input when clicking anywhere in terminal
+                const input = document.getElementById('terminal-input');
+                if (input) input.focus();
+              }}
+            >
+              {/* Output content */}
+              <Text as="span" whiteSpace="pre-wrap">
+                {interactiveOutput ? interactiveOutput : (isInteractive ? "" : 'Click "Run" to execute your code')}
+              </Text>
+              
+              {/* Inline input - appears right after output */}
+              {isInteractive && (
+                <Input
+                  id="terminal-input"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  onKeyDown={handleKeyPress}
+                  variant="flushed"
+                  bg="transparent"
+                  color="white"
+                  fontFamily="monospace"
+                  fontSize="sm"
+                  display="inline-block"
+                  width={inputValue.length > 0 ? `${inputValue.length + 2}ch` : "1ch"}
+                  border="none"
+                  outline="none"
+                  padding="0"
+                  height="1.2em"
+                  _focus={{ boxShadow: "none", outline: "none" }}
+                  autoFocus
+                  style={{
+                    caretColor: "lime",
+                  }}
+                />
+              )}
+            </Box>
+            
+            {/* Help text */}
+            <Text fontSize="xs" color="gray.500" mt={2}>
+              {isInteractive 
+                ? "Type your input and press Enter to send" 
+                : "Press Run to execute your code"}
+            </Text>
+          </Tabs.Content>
           <Tabs.Content value="ai">
             <Dashboard aiAnalysis={aiAnalysis} />
           </Tabs.Content>

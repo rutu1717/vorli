@@ -16,7 +16,7 @@ export const executeCode = async (sourceCode:any,language:Language,stdin:string=
     // Dynamic API URL - Cloudflare tunnel for production
     const apiBase = window.location.hostname === 'localhost' 
         ? 'http://localhost:8080' 
-        : 'https://similarly-collaboration-literally-disclose.trycloudflare.com';
+        : 'https://dow-hugh-motivation-ripe.trycloudflare.com';
     const response = await axios.post(`${apiBase}/api/execute`,{
         "code":sourceCode,
         "version":LANGUAGE_VERSIONS[language],

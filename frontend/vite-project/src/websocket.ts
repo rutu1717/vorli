@@ -52,7 +52,7 @@ export class InteractiveExecutor {
         // Dynamic WebSocket endpoint - Cloudflare tunnel for production
         const wsHost = window.location.hostname === 'localhost' 
             ? 'localhost:8080' 
-            : 'similarly-collaboration-literally-disclose.trycloudflare.com';
+            : 'dow-hugh-motivation-ripe.trycloudflare.com';
         const wsProtocol = window.location.hostname === 'localhost' ? 'ws:' : 'wss:';
         const wsEndpoint = `${wsProtocol}//${wsHost}/ws/execute`;
 

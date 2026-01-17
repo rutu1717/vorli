@@ -144,14 +144,16 @@ const Output = ({ editorRef, language }: Outputprops) => {
   };
 
   return (
-    <Box w="50%">
+    <Box flex="1" minW={{ base: "100%", lg: "0" }}>
       <Text mb={2}>Output</Text>
-      <VStack gap={2} mb={4} display={"flex"} flexDirection={"row"}>
+      {/* Responsive button layout */}
+      <VStack gap={2} mb={4} display={"flex"} flexDirection={{ base: "column", sm: "row" }}>
         <Button
           variant="outline"
           colorScheme="green"
           onClick={isInteractive ? stopExecution : runInteractive}
           disabled={isAnalyzing}
+          width={{ base: "100%", sm: "auto" }}
         >
           {isInteractive ? "⏹ Stop" : "▶ Run"}
         </Button>
@@ -161,12 +163,13 @@ const Output = ({ editorRef, language }: Outputprops) => {
           loading={isAnalyzing}
           loadingText="Analyzing..."
           onClick={analyzeCode}
+          width={{ base: "100%", sm: "auto" }}
         >
           Analyze with AI
         </Button>
       </VStack>
       <Box
-        h="75vh"
+        h={{ base: "50vh", md: "60vh", lg: "75vh" }}
         p={2}
         border="1px solid"
         borderRadius={4}

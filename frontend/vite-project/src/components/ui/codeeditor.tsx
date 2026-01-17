@@ -1,4 +1,4 @@
-import { Box, HStack } from "@chakra-ui/react";
+import { Box } from "@chakra-ui/react";
 import { Editor } from "@monaco-editor/react";
 import { useState, useRef, useEffect } from "react";
 import LanguageSelector from "./languageselector";
@@ -29,8 +29,13 @@ function MyCodeEditor() {
     }, []);
     return (
         <Box>
-            <HStack >
-                <Box w='50%'>
+            {/* Responsive layout: column on mobile, row on desktop */}
+            <Box 
+                display="flex" 
+                flexDirection={{ base: "column", lg: "row" }}
+                gap={4}
+            >
+                <Box flex="1" minW={{ base: "100%", lg: "0" }}>
                     <LanguageSelector onSelect={onSelect} language={language} />
                     <Editor
                         height="75vh"
@@ -44,7 +49,7 @@ function MyCodeEditor() {
                     />
                 </Box>
                 <Output editorRef={editorRef} language={language} />
-            </HStack>
+            </Box>
         </Box>
     )
 }

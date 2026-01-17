@@ -13,10 +13,10 @@ export const executeCode = async (sourceCode:any,language:Language,stdin:string=
     //     "stdin": stdin
     // });
     // return response.data;
-    // Dynamic API URL - works with AWS backend in production
+    // Dynamic API URL - Cloudflare tunnel for production
     const apiBase = window.location.hostname === 'localhost' 
         ? 'http://localhost:8080' 
-        : 'http://52.66.246.154:8080';  // AWS EC2 backend
+        : 'https://similarly-collaboration-literally-disclose.trycloudflare.com';
     const response = await axios.post(`${apiBase}/api/execute`,{
         "code":sourceCode,
         "version":LANGUAGE_VERSIONS[language],

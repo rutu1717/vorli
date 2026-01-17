@@ -53,10 +53,10 @@ const Output = ({ editorRef, language }: Outputprops) => {
     try {
       setIsAnalyzing(true);
 
-      // Dynamic API URL - works with AWS backend in production
+      // Dynamic API URL - Cloudflare tunnel for production
       const apiBase = window.location.hostname === 'localhost' 
         ? 'http://localhost:8080' 
-        : 'http://52.66.246.154:8080';  // AWS EC2 backend
+        : 'https://similarly-collaboration-literally-disclose.trycloudflare.com';
       const response = await axios.post(`${apiBase}/api/analyze`, {
         code: sourceCode,
         language: language

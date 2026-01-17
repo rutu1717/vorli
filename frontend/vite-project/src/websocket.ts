@@ -49,11 +49,11 @@ export class InteractiveExecutor {
         // Get version from constants
         const version = LANGUAGE_VERSIONS[language as keyof typeof LANGUAGE_VERSIONS];
 
-        // Dynamic WebSocket endpoint - works for both local dev and production
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        // Dynamic WebSocket endpoint - Cloudflare tunnel for production
         const wsHost = window.location.hostname === 'localhost' 
             ? 'localhost:8080' 
-            : '52.66.246.154:8080';  // AWS EC2 backend
+            : 'similarly-collaboration-literally-disclose.trycloudflare.com';
+        const wsProtocol = window.location.hostname === 'localhost' ? 'ws:' : 'wss:';
         const wsEndpoint = `${wsProtocol}//${wsHost}/ws/execute`;
 
         // Create WebSocket connection to your Go backend

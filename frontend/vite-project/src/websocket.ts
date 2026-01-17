@@ -53,7 +53,7 @@ export class InteractiveExecutor {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsHost = window.location.hostname === 'localhost' 
             ? 'localhost:8080' 
-            : window.location.host;
+            : '52.66.246.154:8080';  // AWS EC2 backend
         const wsEndpoint = `${wsProtocol}//${wsHost}/ws/execute`;
 
         // Create WebSocket connection to your Go backend

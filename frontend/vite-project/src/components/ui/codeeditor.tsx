@@ -1,4 +1,4 @@
-import { Box } from "@chakra-ui/react";
+import { Box, useBreakpointValue } from "@chakra-ui/react";
 import { Editor } from "@monaco-editor/react";
 import { useState, useRef, useEffect } from "react";
 import LanguageSelector from "./languageselector";
@@ -20,6 +20,7 @@ function MyCodeEditor() {
             setValue(code);
         }
     }
+    const editorHeight = useBreakpointValue({ base: "45vh", lg: "75vh" }); // Reduce height on mobile to prevent scroll trap
     const onSelect = (language: Language) => {
         setLanguage(language);
         setValue(CODE_SNIPPETS[language])
@@ -38,7 +39,7 @@ function MyCodeEditor() {
                 <Box flex="1" minW={{ base: "100%", lg: "0" }}>
                     <LanguageSelector onSelect={onSelect} language={language} />
                     <Editor
-                        height="75vh"
+                        height={editorHeight}
                         theme="vs-dark"
                         language={language}
                         defaultLanguage="cpp"
